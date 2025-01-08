@@ -24,7 +24,7 @@ class ExtractThumbnail(plugin.BlenderExtractor):
     presets = "{}"
 
     def process(self, instance):
-        self.log.debug("Extracting capture..")
+        self.log.debug("Extracting capture for thumbnail..")
 
         if instance.data.get("thumbnailSource"):
             self.log.debug("Thumbnail source found, skipping...")
@@ -33,7 +33,7 @@ class ExtractThumbnail(plugin.BlenderExtractor):
         stagingdir = self.staging_dir(instance)
         folder_name = instance.data["folderEntity"]["name"]
         product_name = instance.data["productName"]
-        filename = f"{folder_name}_{product_name}"
+        filename = f"{folder_name}_{product_name}_thumbnail"
 
         path = os.path.join(stagingdir, filename)
 
@@ -42,6 +42,16 @@ class ExtractThumbnail(plugin.BlenderExtractor):
         camera = instance.data.get("review_camera", "AUTO")
         start = instance.data.get("frameStart", bpy.context.scene.frame_start)
         product_type = instance.data["productType"]
+        display_options = {
+            "shading": {
+                "type": instance.data("shading_type", "SOLID"),
+                "color_type": "MATERIAL",
+            },
+            "show_gizmo": False,
+            "overlay": {
+                "show_overlays": False,
+            },
+        }
         isolate = instance.data("isolate", None)
 
         presets = json.loads(self.presets)
@@ -54,6 +64,7 @@ class ExtractThumbnail(plugin.BlenderExtractor):
             "filename": path,
             "overwrite": True,
             "isolate": isolate,
+            "display_options": display_options,
         })
         preset.setdefault(
             "image_settings",

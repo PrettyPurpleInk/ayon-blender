@@ -27,6 +27,7 @@ class CreateReview(plugin.BlenderCreator):
         return collection
 
     def get_instance_attr_defs(self):
-        defs = lib.collect_animation_defs(self.create_context)
+        defs = lib.collect_animation_defs(self.create_context, handles=False)
+        defs += lib.collect_playblast_defs() # TODO: Settings
 
         return defs

@@ -33,12 +33,15 @@ class CollectReview(plugin.BlenderInstancePlugin):
 
         focal_length = cameras[0].data.lens
 
-        # get isolate objects list from meshes instance members.
-        types = {"MESH", "GPENCIL"}
+        shading_type = instance.data["creator_attributes"]["shadingType"]
+
+        # get isolate objects list
+        # All types of objects: 'MESH', 'CURVE', 'SURFACE', 'META', 'FONT', 'ARMATURE', 'LATTICE', 'EMPTY', 'GPENCIL', 'CAMERA', 'LIGHT', 'SPEAKER', 'LIGHT_PROBE'
+        types_exclude = {"EMPTY", "CAMERA", "ARMATURE", "LIGHT", "LIGHT_PROBE", "SPEAKER"}
         isolate_objects = [
             obj
             for obj in instance
-            if isinstance(obj, bpy.types.Object) and obj.type in types
+            if isinstance(obj, bpy.types.Object) and not obj.type in types_exclude
         ]
 
         # Store focal length in `burninDataMembers`
@@ -48,6 +51,7 @@ class CollectReview(plugin.BlenderInstancePlugin):
         instance.data.update({
             "review_camera": camera,
             "fps": instance.context.data["fps"],
+            "shadingType": shading_type,
             "isolate": isolate_objects,
         })
 

@@ -8,7 +8,8 @@ import bpy
 import addon_utils
 from ayon_core.lib import (
     Logger,
-    NumberDef
+    NumberDef,
+    EnumDef,
 )
 
 if TYPE_CHECKING:
@@ -490,7 +491,7 @@ def attribute_overrides(
             setattr_deep(obj, key, value)
 
 
-def collect_animation_defs(create_context, step=True, fps=False):
+def collect_animation_defs(create_context, step=True, fps=False, handles=True):
     """Get the basic animation attribute definitions for the publisher.
 
     Arguments:
@@ -516,7 +517,8 @@ def collect_animation_defs(create_context, step=True, fps=False):
     task_entity = create_context.get_current_task_entity()
     attrib: dict = task_entity["attrib"]
     frame_start = attrib["frameStart"]
-    frame_end = attrib["frameEnd"]
+    # TODO: Setting frameEnd to current scene frame_end if frameStart and frameEnd are identical. Could be a setting?
+    frame_end = attrib["frameEnd"] if frame_start != attrib["frameEnd"] else scene.frame_end
     handle_start = attrib["handleStart"]
     handle_end = attrib["handleEnd"]
 
@@ -530,17 +532,21 @@ def collect_animation_defs(create_context, step=True, fps=False):
                   label="Frame End",
                   default=frame_end,
                   decimals=0),
-        NumberDef("handleStart",
-                  label="Handle Start",
-                  tooltip="Frames added before frame start to use as handles.",
-                  default=handle_start,
-                  decimals=0),
-        NumberDef("handleEnd",
-                  label="Handle End",
-                  tooltip="Frames added after frame end to use as handles.",
-                  default=handle_end,
-                  decimals=0),
     ]
+
+    if handles:
+        defs += [
+            NumberDef("handleStart",
+                    label="Handle Start",
+                    tooltip="Frames added before frame start to use as handles.",
+                    default=handle_start,
+                    decimals=0),
+            NumberDef("handleEnd",
+                    label="Handle End",
+                    tooltip="Frames added after frame end to use as handles.",
+                    default=handle_end,
+                    decimals=0),
+        ]
 
     if step:
         defs.append(
@@ -560,6 +566,45 @@ def collect_animation_defs(create_context, step=True, fps=False):
             "fps", label="FPS", default=current_fps, decimals=5
         )
         defs.append(fps_def)
+
+    return defs
+
+
+def collect_playblast_defs(options=None):
+    """Get the basic playblast attribute definitions for the publisher.
+
+    Arguments:
+        options (Dict[str, Any]): Already available options which are used
+            as defaults for attributes.
+
+    Returns:
+        List[EnumDef]: List of attribute definitions. # TODO: Possible AbstractAttrDef
+
+    """
+
+    # Enum items and help text
+    shading_type_enum_items = [
+        {"value": "WIREFRAME", "label": "Wireframe"},
+        {"value": "SOLID", "label": "Solid View"},
+        {"value": "VIEWPORT", "label": "Viewport Shading"},
+        {"value": "RENDERED", "label": "Rendered"},
+    ]
+    shading_type_help = "Shading type that is selected for the playblast viewport render"
+    
+    # build attributes
+    defs = [
+        EnumDef("shadingType",
+                  label="Shading Type",
+                  items=shading_type_enum_items,
+                  default="SOLID" if options is None else options.get("shading_type"),
+                  multiselection=False,
+                  tooltip=shading_type_help),
+    ]
+    # TODO: More defs:
+    # - (wire) color that depend on selected mode
+    # - Scene Lights & Scene World bool options
+    
+    # Also options for filtering(?)
 
     return defs
 

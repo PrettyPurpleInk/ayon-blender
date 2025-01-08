@@ -30,6 +30,7 @@ class ExtractPlayblast(
     presets = "{}"
 
     def process(self, instance):
+        self.log.debug("Extracting capture for playblast..")
         if not self.is_active(instance.data):
             return
 
@@ -51,7 +52,17 @@ class ExtractPlayblast(
 
         # get cameras
         camera = instance.data("review_camera", None)
-
+        # get shading type and set display options
+        display_options = {
+            "shading": {
+                "type": instance.data.get("shadingType", "SOLID"),
+                "color_type": "MATERIAL",
+            },
+            "show_gizmo": False,
+            "overlay": {
+                "show_overlays": False,
+            },
+        }
         # get isolate objects list
         isolate = instance.data("isolate", None)
 
@@ -74,6 +85,7 @@ class ExtractPlayblast(
             "filename": path,
             "overwrite": True,
             "isolate": isolate,
+            "display_options": display_options,
         })
         preset.setdefault(
             "image_settings",
