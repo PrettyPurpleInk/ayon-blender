@@ -347,16 +347,19 @@ class BlenderCreator(Creator):
         for instance in instances:
             node = instance.transient_data["instance_node"]
 
-            if isinstance(node, bpy.types.Collection):
-                for children in node.children_recursive:
-                    if isinstance(children, bpy.types.Collection):
-                        bpy.data.collections.remove(children)
-                    else:
-                        bpy.data.objects.remove(children)
+            try:
+                if isinstance(node, bpy.types.Collection):
+                    for children in node.children_recursive:
+                        if isinstance(children, bpy.types.Collection):
+                            bpy.data.collections.remove(children)
+                        else:
+                            bpy.data.objects.remove(children)
 
-                bpy.data.collections.remove(node)
-            elif isinstance(node, bpy.types.Object):
-                bpy.data.objects.remove(node)
+                    bpy.data.collections.remove(node)
+                elif isinstance(node, bpy.types.Object):
+                    bpy.data.objects.remove(node)
+            except ReferenceError:
+                self.log.warning("Instance {node.name} has been removed already.")
 
             self._remove_instance_from_context(instance)
 

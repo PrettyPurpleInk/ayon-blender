@@ -93,6 +93,14 @@ def capture(
             stack.enter_context(applied_image_settings(window, image_settings))
             stack.enter_context(maintained_time())
 
+            # TODO: Render in a loop with animation=false so window doesn't freeze?
+            #for seq in range(0,MAX_FRAMES):
+            #    # Your code to rotate the object goes here
+            #    bpy.ops.render.opengl()
+            #    image = bpy.data.images['Render Result']
+            #    image_name = 'PREFIX_STRING' + format(seq, '03d') + '.png'
+            #    filename = str(p / image_name)
+            #    image.save_render(filename)
             bpy.ops.render.opengl(
                 animation=True,
                 render_keyed_only=False,

@@ -586,7 +586,7 @@ def collect_playblast_defs(options=None):
     shading_type_enum_items = [
         {"value": "WIREFRAME", "label": "Wireframe"},
         {"value": "SOLID", "label": "Solid View"},
-        {"value": "VIEWPORT", "label": "Viewport Shading"},
+        {"value": "MATERIAL", "label": "Material Preview"},
         {"value": "RENDERED", "label": "Rendered"},
     ]
     shading_type_help = "Shading type that is selected for the playblast viewport render"
