@@ -84,9 +84,8 @@ def capture(
 
     with _independent_window() as window:
 
-        applied_view(window, camera, isolate, options=display_options)
-
         with contextlib.ExitStack() as stack:
+            stack.enter_context(applied_view(window, camera, isolate, options=display_options))
             stack.enter_context(maintain_camera(window, camera))
             stack.enter_context(applied_frame_range(window, *frame_range))
             stack.enter_context(applied_render_options(window, render_options))
@@ -150,6 +149,7 @@ def _apply_options(entity, options):
             setattr(entity, option, value)
 
 
+@contextlib.contextmanager
 def applied_view(window, camera, isolate=None, options=None):
     """Apply view options to window."""
     area = window.screen.areas[0]
@@ -176,6 +176,17 @@ def applied_view(window, camera, isolate=None, options=None):
         space.shading.color_type = "MATERIAL"
         space.show_gizmo = False
         space.overlay.show_overlays = False
+    
+    try:
+        yield
+    finally:
+        # Exit local view
+        context = create_blender_context(selected=isolate or objects, window=window)
+        with bpy.context.temp_override(**context):
+            # Only toggle back if in local view
+            if bpy.context.space_data.local_view:
+                bpy.ops.view3d.localview()
+
 
 
 @contextlib.contextmanager
