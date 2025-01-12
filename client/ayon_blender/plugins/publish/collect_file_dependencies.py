@@ -15,9 +15,9 @@ class CollectFileDependencies(pyblish.api.ContextPlugin):
 
     @classmethod
     def apply_settings(cls, project_settings):
-        # Disable plug-in if not used for deadline submission anyway
-        settings = project_settings["deadline"]["publish"]["BlenderSubmitDeadline"]  # noqa
-        cls.enabled = settings.get("asset_dependencies", True)
+        if "deadline" in project_settings:
+            settings = project_settings["deadline"]["publish"]["BlenderSubmitDeadline"]  # noqa
+            cls.enabled = settings.get("asset_dependencies", True)
 
     def process(self, context):
         dependencies = set()
