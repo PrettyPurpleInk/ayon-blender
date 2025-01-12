@@ -4,9 +4,12 @@ Playblasting with independent viewport, camera and display options
 """
 import contextlib
 import bpy
+from ayon_core.lib import Logger
 
 from .lib import maintained_time
 from .plugin import deselect_all, create_blender_context
+
+log = Logger.get_logger(__name__)
 
 
 def capture(
@@ -76,7 +79,6 @@ def capture(
         filename = scene.render.filepath
 
     render_options = {
-        "filepath": "{}.".format(filename.rstrip(".")),
         "resolution_x": width,
         "resolution_y": height,
         "use_overwrite": overwrite,
@@ -92,22 +94,24 @@ def capture(
             stack.enter_context(applied_image_settings(window, image_settings))
             stack.enter_context(maintained_time())
 
-            # TODO: Render in a loop with animation=false so window doesn't freeze?
-            #for seq in range(0,MAX_FRAMES):
-            #    # Your code to rotate the object goes here
-            #    bpy.ops.render.opengl()
-            #    image = bpy.data.images['Render Result']
-            #    image_name = 'PREFIX_STRING' + format(seq, '03d') + '.png'
-            #    filename = str(p / image_name)
-            #    image.save_render(filename)
-            bpy.ops.render.opengl(
-                animation=True,
-                render_keyed_only=False,
-                sequencer=False,
-                write_still=False,
-                view_context=True
-            )
-
+            # Render frames in a loop to prevent Blender from freezing for a long time
+            frame_list = list(range(start_frame, end_frame+1, step_frame))
+            filepath_base = filename.rstrip(".")
+            for frame_num in frame_list:
+                # Set frame number and file path
+                window.scene.frame_set(frame_num)
+                filepath = f"{filepath_base}.{frame_num:04d}"
+                scene.render.filepath = filepath
+                # Render
+                bpy.ops.render.opengl(
+                    animation=False,
+                    render_keyed_only=False,
+                    sequencer=False,
+                    write_still=True,
+                    view_context=True
+                )
+                
+    
     return filename
 
 
@@ -196,6 +200,7 @@ def applied_frame_range(window, start, end, step):
     current_frame_start = window.scene.frame_start
     current_frame_end = window.scene.frame_end
     current_frame_step = window.scene.frame_step
+    current_frame = window.scene.frame_current
     # Apply frame range
     window.scene.frame_start = start
     window.scene.frame_end = end
@@ -207,6 +212,7 @@ def applied_frame_range(window, start, end, step):
         window.scene.frame_start = current_frame_start
         window.scene.frame_end = current_frame_end
         window.scene.frame_step = current_frame_step
+        window.scene.frame_set(current_frame)
 
 
 @contextlib.contextmanager
