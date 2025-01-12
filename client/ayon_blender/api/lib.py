@@ -609,6 +609,22 @@ def collect_playblast_defs(options=None):
     return defs
 
 
+def collect_vse_defs(create_context):
+    """Get the basic timeline attribute definitions for the publisher.
+
+    Arguments:
+        create_context (CreateContext): The context of publisher will be
+            used to define the defaults for the attributes to use the current
+            context's entity frame range as default values.
+
+    Returns:
+        List[EnumDef]: List of attribute definitions. # TODO: Possible AbstractAttrDef
+
+    """
+
+    return []
+
+
 def get_cache_modifiers(obj, modifier_type="MESH_SEQUENCE_CACHE"):
     modifiers_dict = {}
     modifiers = [modifier for modifier in obj.modifiers
