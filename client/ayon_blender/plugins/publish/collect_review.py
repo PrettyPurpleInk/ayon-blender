@@ -33,11 +33,13 @@ class CollectReview(plugin.BlenderInstancePlugin):
 
         focal_length = cameras[0].data.lens
 
+        # TODO: Is this the right way?
         shading_type = instance.data["creator_attributes"]["shadingType"]
+        frame_step = instance.data["creator_attributes"]["frameStep"]
 
         # get isolate objects list
         # All types of objects: 'MESH', 'CURVE', 'SURFACE', 'META', 'FONT', 'ARMATURE', 'LATTICE', 'EMPTY', 'GPENCIL', 'CAMERA', 'LIGHT', 'SPEAKER', 'LIGHT_PROBE'
-        types_exclude = {"EMPTY", "CAMERA", "ARMATURE", "LIGHT", "LIGHT_PROBE", "SPEAKER"}
+        types_exclude = {"EMPTY", "CAMERA", "ARMATURE", "LIGHT_PROBE", "SPEAKER"}
         isolate_objects = [
             obj
             for obj in instance
@@ -50,6 +52,7 @@ class CollectReview(plugin.BlenderInstancePlugin):
 
         instance.data.update({
             "review_camera": camera,
+            "frameStep": frame_step,
             "fps": instance.context.data["fps"],
             "shadingType": shading_type,
             "isolate": isolate_objects,

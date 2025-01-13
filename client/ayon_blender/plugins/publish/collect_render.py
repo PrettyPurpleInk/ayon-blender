@@ -106,7 +106,7 @@ class CollectBlenderRender(plugin.BlenderInstancePlugin):
                 "family": prod_type,
                 "families": [prod_type, "render.farm"],
                 "fps": context.data["fps"],
-                "byFrameStep": instance.data["creator_attributes"].get("step", 1),
+                "byFrameStep": instance.data["creator_attributes"].get("frameStep", 1),
                 "review": render_data.get("review", False),
                 "multipartExr": ext == "exr" and multilayer,
                 "farm": True,

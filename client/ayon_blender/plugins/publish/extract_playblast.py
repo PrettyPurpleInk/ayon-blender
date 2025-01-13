@@ -46,6 +46,7 @@ class ExtractPlayblast(
         # get them from Blender timeline.
         start = instance.data.get("frameStart", bpy.context.scene.frame_start)
         end = instance.data.get("frameEnd", bpy.context.scene.frame_end)
+        step = instance.data.get("frameStep", bpy.context.scene.frame_step)
 
         self.log.debug(f"start: {start}, end: {end}")
         assert end >= start, "Invalid time range!"
@@ -82,6 +83,7 @@ class ExtractPlayblast(
             "camera": camera,
             "start_frame": start,
             "end_frame": end,
+            "step_frame": step,
             "filename": path,
             "overwrite": True,
             "isolate": isolate,

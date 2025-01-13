@@ -84,6 +84,29 @@ def capture(
         "use_overwrite": overwrite,
     }
 
+    rendered = False
+    engine_options = {}
+    engine = "EEVEE"
+    try:
+        if display_options["shading"]["type"] == "RENDERED":
+            if scene.render.engine == "CYCLES":
+                # Only set rendered true for Cycles for now as EEVEE can render in the viewport
+                rendered = True
+                engine = "CYCLES"
+                engine_options = {
+                    "adaptive_threshold": 0.1,
+                    "time_limit": 1,
+                    "use_denoising": True,
+                    "denoiser": "OPENIMAGEDENOISE",
+                    "denoising_quality": "BALANCED",
+                    "denoising_use_gpu": True,
+                }
+            else:
+                # TODO
+                engine_options = {}
+    except:
+        pass
+
     with _independent_window() as window:
 
         with contextlib.ExitStack() as stack:
@@ -91,6 +114,7 @@ def capture(
             stack.enter_context(maintain_camera(window, camera))
             stack.enter_context(applied_frame_range(window, *frame_range))
             stack.enter_context(applied_render_options(window, render_options))
+            stack.enter_context(applied_engine_options(window, engine, engine_options))
             stack.enter_context(applied_image_settings(window, image_settings))
             stack.enter_context(maintained_time())
 
@@ -103,13 +127,21 @@ def capture(
                 filepath = f"{filepath_base}.{frame_num:04d}"
                 scene.render.filepath = filepath
                 # Render
-                bpy.ops.render.opengl(
+                if rendered:
+                    bpy.ops.render.render(
                     animation=False,
-                    render_keyed_only=False,
-                    sequencer=False,
                     write_still=True,
-                    view_context=True
+                    use_viewport=True,
+                    layer="COMBINED"                
                 )
+                else:
+                    bpy.ops.render.opengl(
+                        animation=False,
+                        render_keyed_only=False,
+                        sequencer=False,
+                        write_still=True,
+                        view_context=True
+                    )
                 
     
     return filename
@@ -162,7 +194,7 @@ def applied_view(window, camera, isolate=None, options=None):
     area.ui_type = "VIEW_3D"
 
     # All types of objects: 'MESH', 'CURVE', 'SURFACE', 'META', 'FONT', 'ARMATURE', 'LATTICE', 'EMPTY', 'GPENCIL', 'CAMERA', 'LIGHT', 'SPEAKER', 'LIGHT_PROBE'
-    types_exclude = {"EMPTY", "CAMERA", "ARMATURE", "LIGHT", "LIGHT_PROBE", "SPEAKER"}
+    types_exclude = {"EMPTY", "CAMERA", "ARMATURE", "LIGHT_PROBE", "SPEAKER"}
     objects = [obj for obj in window.scene.objects if not obj.type in types_exclude]
 
     if camera == "AUTO":
@@ -236,6 +268,30 @@ def applied_render_options(window, options):
     finally:
         # Restore previous settings
         _apply_options(render, original)
+
+
+@contextlib.contextmanager
+def applied_engine_options(window, engine, options):
+    """Context manager for setting render options."""
+    engine = window.scene.cycles if engine == "CYCLES" else window.scene.eevee
+
+    # Store current settings
+    original = {}
+    for opt in options.copy():
+        try:
+            original[opt] = getattr(engine, opt)
+        except ValueError:
+            options.pop(opt)
+
+    # Apply settings
+    _apply_options(engine, options)
+
+    try:
+        yield
+    finally:
+        # Restore previous settings
+        _apply_options(engine, original)
+
 
 
 @contextlib.contextmanager

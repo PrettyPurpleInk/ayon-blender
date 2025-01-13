@@ -551,7 +551,7 @@ def collect_animation_defs(create_context, step=True, fps=False, handles=True):
     if step:
         defs.append(
             NumberDef(
-                "step",
+                "frameStep",
                 label="Step size",
                 tooltip="Number of frames to skip forward while rendering/"
                         "playing back each frame",
