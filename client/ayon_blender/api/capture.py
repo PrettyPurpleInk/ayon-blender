@@ -189,9 +189,11 @@ def _apply_options(entity, options):
 def applied_view(window, camera, isolate=None, options=None):
     """Apply view options to window."""
     area = window.screen.areas[0]
-    space = area.spaces[0]
-
     area.ui_type = "VIEW_3D"
+
+    # FIXME (BUG): space is not of the recent opened window but the first space of the main window -> Explains the error
+    # "AttributeError: 'SpaceImageEditor' object has no attribute 'camera'" if no 3D viewport is opened in first space
+    space = area.spaces[0]
 
     # All types of objects: 'MESH', 'CURVE', 'SURFACE', 'META', 'FONT', 'ARMATURE', 'LATTICE', 'EMPTY', 'GPENCIL', 'CAMERA', 'LIGHT', 'SPEAKER', 'LIGHT_PROBE'
     types_exclude = {"EMPTY", "CAMERA", "ARMATURE", "LIGHT_PROBE", "SPEAKER"}
