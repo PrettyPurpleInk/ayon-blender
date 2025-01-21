@@ -25,6 +25,7 @@ class CreateModel(plugin.BlenderCreator):
         # Add selected objects to instance
         if pre_create_data.get("use_selection"):
             # TODO (Bug): Object not in ViewLayer
+            # This happens when an object is only in a disabled collection -> Filter out!
             # "RuntimeError: Error: ViewLayer 'ViewLayer' does not contain object '<name>_modelMain'"
             bpy.context.view_layer.objects.active = asset_group
             for obj in lib.get_selection():
