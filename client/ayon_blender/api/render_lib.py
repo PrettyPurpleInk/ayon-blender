@@ -1,10 +1,10 @@
 import os
 from pathlib import Path
-
 import bpy
 
 from ayon_core.settings import get_project_settings
 from ayon_core.pipeline import get_current_project_name
+from . import lib
 
 
 def get_default_render_folder(settings):
@@ -123,9 +123,17 @@ def set_render_passes(settings, renderer, view_layers):
         if renderer == "BLENDER_EEVEE":
             # Eevee exclusive passes
             aov_options = get_aov_options(renderer)
-            eevee_attrs = ["use_pass_shadow", "cryptomatte_accurate"]
+            eevee_attrs = [
+                "use_pass_bloom",
+                "use_pass_transparent",
+                "use_pass_volume_direct"
+            ]
             for pass_name, attr in aov_options.items():
-                target = vl if attr in eevee_attrs else vl.eevee
+                target = vl.eevee if attr in eevee_attrs else vl
+                ver_major, ver_minor, _ = lib.get_blender_version()
+                if ver_major >= 3 and ver_minor > 6:
+                    if attr == "use_pass_bloom":
+                        continue
                 setattr(target, attr, pass_name in aov_list)
         elif renderer == "CYCLES":
             # Cycles exclusive passes
@@ -353,7 +361,8 @@ def set_node_tree(
         # and link it
         for render_layer_node, passes in render_aovs_dict.items():
             render_layer = render_layer_node.layer
-            aov_file_products[render_layer] = []
+            if not aov_file_products.get(render_layer, []):
+                aov_file_products[render_layer] = []
             for rpass in passes:
                 slot, filepath = _create_aov_slot(
                     name, aov_sep, slots, rpass.name, multi_exr, output_path, render_layer)
@@ -381,7 +390,7 @@ def set_node_tree(
     output.name = "AYON File Output"
     output.label = "AYON File Output"
 
-    return [] if multi_exr else aov_file_products
+    return {} if multi_exr else aov_file_products
 
 
 def imprint_render_settings(node, data):
@@ -420,6 +429,11 @@ def prepare_rendering(asset_group):
     ext = get_image_format(settings)
     multilayer = get_multilayer(settings)
     renderer = get_renderer(settings)
+    ver_major, ver_minor, _ = lib.get_blender_version()
+    if renderer == "BLENDER_EEVEE" and (
+        ver_major >= 4 and ver_minor >=2
+    ):
+        renderer = "BLENDER_EEVEE_NEXT"
     compositing = get_compositing(settings)
 
     set_render_format(ext, multilayer)
@@ -437,8 +451,10 @@ def prepare_rendering(asset_group):
 
     # Clear the render filepath, so that the output is handled only by the
     # output node in the compositor.
-    bpy.context.scene.render.filepath = ""
-
+    tmp_render_path = os.path.join(os.getenv("AYON_WORKDIR"), "renders", "tmp")
+    tmp_render_path = tmp_render_path.replace("\\", "/")
+    os.makedirs(tmp_render_path, exist_ok=True)
+    bpy.context.scene.render.filepath = f"{tmp_render_path}/"
     render_settings = {
         "render_folder": render_folder,
         "aov_separator": aov_sep,
